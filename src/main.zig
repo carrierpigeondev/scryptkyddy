@@ -6,12 +6,23 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const allocator = init.gpa;
 
-    const actor_directory = "builtin";
+    const actor_directory = "src";
 
-    _ = io;
-    _ = allocator;
-    _ = actor_directory;
+    var dir = util.DirectoryContext.init(
+        actor_directory,
+        io,
+        allocator
+    );
+    defer dir.deinit();
+    try dir.discover(); // must be called prior to iterating childrenNames
 
-    // read the actor directory
-    // currently uses builtin, need to make the logic to use an actually real path, or set of paths
+    for (dir.childrenNames.items) |entry| {
+        std.debug.print("{s}\n", .{entry});
+        //
+        // const file = try dir.dir.openFile(dir.io, entry, .{});
+        //
+        // const readbuf: [1024]u8 = undefined;
+        // const filereader = file.reader(dir.io, readbuf);
+        // filereader.interface.re
+    }
 }
