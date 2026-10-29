@@ -1,0 +1,12 @@
+.{
+    .name = .scryptkyddy,
+    .version = "0.0.0",
+    .fingerprint = 0xb84569f46637529f,
+    .dependencies = .{
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
