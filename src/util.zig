@@ -50,4 +50,23 @@ pub const DirectoryContext = struct {
             try self.childrenNames.append(self.alloc, name);
         }
     }
+
+    pub fn containsFile(self: *DirectoryContext, name: []const u8) bool {
+        for (self.childrenNames.items) |entry| {
+            if (std.mem.eql(u8, entry, name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // use in conjunction with containsFile() for safe reading
+    // this will not return an error, but undefined if unable to read
+    // allocates memory and must be freed by self.alloc
+    pub fn readFileAlloc(self: *DirectoryContext, name: []const u8) []u8 {
+        return self.dir.readFileAlloc(self.io, name, self.alloc, .unlimited) catch |err| {
+            std.log.warn("Cannot read file {s} in directory {s} due to {}.", .{name, self.path, err});
+            return undefined;
+        };
+    }
 };

@@ -17,12 +17,10 @@ pub fn main(init: std.process.Init) !void {
     try dir.discover(); // must be called prior to iterating childrenNames
 
     for (dir.childrenNames.items) |entry| {
-        std.debug.print("{s}\n", .{entry});
-        //
-        // const file = try dir.dir.openFile(dir.io, entry, .{});
-        //
-        // const readbuf: [1024]u8 = undefined;
-        // const filereader = file.reader(dir.io, readbuf);
-        // filereader.interface.re
+        std.debug.print(">> {s} >>\n", .{entry});
+
+        const contents = dir.readFileAlloc(entry);
+        std.debug.print("{s}\n", .{contents});
+        dir.alloc.free(contents);
     }
 }
