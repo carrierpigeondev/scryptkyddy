@@ -29,12 +29,16 @@ pub fn main(init: std.process.Init) !void {
     for (dir_ctx.children_names.items) |entry| {
         // call the broadcast function to know which roles the actor implements
         const full_path = dir_ctx.getFullPath(entry);
-        const broadcast_res = try std.process.run(dir_ctx.alloc, dir_ctx.io, .{
+        const broadcast_res = std.process.run(dir_ctx.alloc, dir_ctx.io, .{
             .argv = &.{
                 full_path, // must call full path
                 "broadcast"
             }
-        });
+        }) catch |err| {
+            // this will occur whenever a system cannot execute command (i.e., exe on Linux; elf on Windows)
+            std.log.warn("Failed to run the actor {s} due to {}. Forced to skip.", .{entry, err});
+            continue;
+        };
 
         defer dir_ctx.alloc.free(broadcast_res.stdout);
         defer dir_ctx.alloc.free(broadcast_res.stderr);
@@ -47,7 +51,6 @@ pub fn main(init: std.process.Init) !void {
                 try actors_map.fetch_actors.append(actors_map.alloc, full_path);
                 continue;
             }
-
             if (std.mem.eql(u8, role, "install")) {
                 try actors_map.install_actors.append(actors_map.alloc, full_path);
                 continue;

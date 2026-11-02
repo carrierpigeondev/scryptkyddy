@@ -9,6 +9,8 @@ $1  : Role
 $...: Role Parameters
 ```
 
+Note: the 0 
+
 An actor must define the `broadcast` role, which prints out a new-line separated list of which other roles the actor
 implements.
 
