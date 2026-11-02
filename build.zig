@@ -1,5 +1,19 @@
 const std = @import("std");
 
+fn addActor(b: *std.Build, name: []const u8) void {
+    const cmd = b.addSystemCommand(&.{
+        "zig", "build", "--prefix", "../../actors-bin"
+    });
+
+    cmd.setCwd(b.path(b.pathJoin(&.{
+        "actors", name
+    })));
+    cmd.has_side_effects = true;
+
+    const step = b.step(name, b.fmt("Builds actor: {s}", .{name}));
+    step.dependOn(&cmd.step);
+}
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -16,6 +30,8 @@ pub fn build(b: *std.Build) !void {
     });
 
     b.installArtifact(exe);
+
+    addActor(b, "http-actor");
 
     //
     // run step

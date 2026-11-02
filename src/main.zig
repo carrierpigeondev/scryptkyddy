@@ -7,7 +7,7 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const allocator = init.gpa;
 
-    const actor_directory = "actors"; // temporary
+    const actor_directory = "actors-bin"; // temporary
     // currently actors VERY BASIC; JUST FETCHING and none of the complexities at the moment
 
     // create the directory context for the actors directory
@@ -60,5 +60,9 @@ pub fn main(init: std.process.Init) !void {
 
     for (actors_map.fetch_actors.items) |entry| {
         std.log.debug("<fetch> {s}\n", .{entry});
+    }
+
+    for (actors_map.install_actors.items) |entry| {
+        std.log.debug("<install> {s}\n", .{entry});
     }
 }
