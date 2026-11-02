@@ -1,7 +1,7 @@
 .{
-    .name = .http_actor,
+    .name = .scryptkyddy,
     .version = "0.0.0",
-    .fingerprint = 0x3708eaacbc131bb0,
+    .fingerprint = 0xb84569f46637529f,
     .dependencies = .{
     },
     .paths = .{
