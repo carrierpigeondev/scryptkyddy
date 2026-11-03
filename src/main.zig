@@ -10,59 +10,15 @@ pub fn main(init: std.process.Init) !void {
     const actor_directory = "actors-bin"; // temporary
     // currently actors VERY BASIC; JUST FETCHING and none of the complexities at the moment
 
-    // create the directory context for the actors directory
-    var dir_ctx = DirectoryContext.init(
-        actor_directory,
-        io,
-        allocator
-    );
-    defer dir_ctx.deinit();
-    try dir_ctx.discover(); // must be called prior to iterating children_names
-
-    // must be made second, deferred second (freed first) because the dir_ctx owns the fullpaths of actors stored
-    // in the mapping
-    var actors_map = ActorsMapping.init(allocator);
+    // creates and owns its own DirectoryContext
+    var actors_map = try ActorsMapping.init(actor_directory, io, allocator);
     defer actors_map.deinit();
-
-    // tmp display all actors
-    // at the same time, register all the actors according to their functions
-    for (dir_ctx.children_names.items) |entry| {
-        // call the broadcast function to know which roles the actor implements
-        const full_path = dir_ctx.getFullPath(entry);
-        const broadcast_res = std.process.run(dir_ctx.alloc, dir_ctx.io, .{
-            .argv = &.{
-                full_path, // must call full path
-                "broadcast"
-            }
-        }) catch |err| {
-            // this will occur whenever a system cannot execute command (i.e., exe on Linux; elf on Windows)
-            std.log.warn("Failed to run the actor {s} due to {}. Forced to skip.", .{entry, err});
-            continue;
-        };
-
-        defer dir_ctx.alloc.free(broadcast_res.stdout);
-        defer dir_ctx.alloc.free(broadcast_res.stderr);
-
-        const output= broadcast_res.stdout;
-        var roles = std.mem.splitScalar(u8, output, '\n');
-
-        while (roles.next()) |role| {
-            if (std.mem.eql(u8, role, "fetch")) {
-                try actors_map.fetch_actors.append(actors_map.alloc, full_path);
-                continue;
-            }
-            if (std.mem.eql(u8, role, "install")) {
-                try actors_map.install_actors.append(actors_map.alloc, full_path);
-                continue;
-            }
-        }
-    }
+    try actors_map.registerActors();
 
     for (actors_map.fetch_actors.items) |entry| {
-        std.log.debug("<fetch> {s}\n", .{entry});
+        std.log.debug("<fetch> {s}", .{entry});
     }
-
     for (actors_map.install_actors.items) |entry| {
-        std.log.debug("<install> {s}\n", .{entry});
+        std.log.debug("<install> {s}", .{entry});
     }
 }
