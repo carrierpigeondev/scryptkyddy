@@ -67,4 +67,36 @@ pub const ActorsMapping = struct {
             }
         }
     }
+
+    pub fn callActor(self: *ActorsMapping, argv: []const []const u8) !void {
+        const name = argv[1];
+        const role = argv[2];
+
+        if (!self.dir_ctx.containsFile(name)) return error.ActorNotDefined;
+
+        const full_path = self.dir_ctx.getFullPath(name);
+
+        if (!self.isActorValid(full_path, role)) return error.ActorInvalidRole;
+
+        std.log.info("{s}", .{full_path});
+        // TODO: actually call the actor; remove above line when done; just to debug that it is valid
+    }
+
+    pub fn isActorValid(self: *ActorsMapping, full_path: []const u8, role: []const u8) bool {
+        if (std.mem.eql(u8, role, "fetch")) {
+            for (self.fetch_actors.items) |entry| {
+                if (std.mem.eql(u8, entry, full_path)) {
+                    return true;
+                }
+            }
+        }
+        if (std.mem.eql(u8, role, "install")) {
+            for (self.install_actors.items) |entry| {
+                if (std.mem.eql(u8, entry, full_path)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 };

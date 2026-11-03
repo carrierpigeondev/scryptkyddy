@@ -31,6 +31,7 @@ pub fn build(b: *std.Build) !void {
 
     b.installArtifact(exe);
 
+    // build steps for builtin actors
     addActor(b, "http-actor");
     addActor(b, "single-file-write-actor");
 
