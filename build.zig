@@ -29,6 +29,12 @@ pub fn build(b: *std.Build) !void {
         .root_module = exe_mod,
     });
 
+    const toml = b.dependency("toml", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.root_module.addImport("toml", toml.module("toml"));
+
     b.installArtifact(exe);
 
     // build steps for builtin actors

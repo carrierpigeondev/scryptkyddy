@@ -1,0 +1,7 @@
+[[scrypt]]
+    id = "procexp"
+    source = "https://live.sysinternals.com/procexp.exe"
+
+    [scrypt.roles]
+        fetch = "http-actor.exe"
+        install = "single-file-write-actor.exe"

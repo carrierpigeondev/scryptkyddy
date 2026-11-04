@@ -1,4 +1,5 @@
 const std = @import("std");
+const toml = @import("toml");
 
 const DirectoryContext = @import("common/directory_context.zig").DirectoryContext;
 const ActorsMapping = @import("common/actors_mapping.zig").ActorsMapping;
@@ -32,6 +33,37 @@ pub fn main(init: std.process.Init) !void {
         std.log.debug("<install> {s}", .{entry});
     }
 
+
+    // TODO: make catalogue fetching be done through the use of an actor
+    // TWO OPTIONS TO IMPLEMENT IT
+    // form a combined catalogue string THEN register as a list of scrypts
+    // OR
+    // create empty list of scrypts and append to that and do toml parse for each
+    const catalogue =
+        \\ [[scrypts]]
+        \\ id = "procexp"
+        \\ source = "https://live.sysinternals.com/procexp.exe"
+        //\\
+        // \\ [scrypt.roles]
+        // \\ fetch = "http-actor.exe"
+        // \\ install = "single-file-write-actor.exe"
+    ;
+
+    _ = catalogue;
+
+    const Catalogue = struct {
+        scrypts: []struct {
+            id: []const u8,
+            source: []const u8,
+        }
+    };
+
+    var parser = toml.Parser(Catalogue).init(allocator);
+    parser.options.disallow_unknown_fields = true;
+    defer parser.deinit();
+
+    _ = argv;
+
     // TODO: setup argument parser in common/arg_parser.zig; for now just use argv
-    try actors_map.callActor(argv);
+    //try actors_map.callActor(argv);
 }
