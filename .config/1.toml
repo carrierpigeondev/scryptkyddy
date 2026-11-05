@@ -1,0 +1,7 @@
+[[scrypts]]
+id = "procmon"
+source = "https://live.sysinternals.com/procmon.exe"
+
+[[scrypts]]
+id = "procmon64"
+source = "https://live.sysinternals.com/procmon64.exe"

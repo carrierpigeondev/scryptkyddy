@@ -1,0 +1,7 @@
+[[scrypts]]
+id = "procexp"
+source = "https://live.sysinternals.com/procexp.exe"
+
+[[scrypts]]
+id = "procexp64"
+source = "https://live.sysinternals.com/procexp64.exe"

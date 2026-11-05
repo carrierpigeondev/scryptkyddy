@@ -3,6 +3,7 @@ const toml = @import("toml");
 
 const DirectoryContext = @import("common/directory_context.zig").DirectoryContext;
 const ActorsMapping = @import("common/actors_mapping.zig").ActorsMapping;
+const Catalogue = @import("common//catalogue.zig").Catalogue;
 
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
@@ -10,6 +11,7 @@ pub fn main(init: std.process.Init) !void {
     const argv = try init.minimal.args.toSlice(init.arena.allocator());
 
     const actor_directory = "actors-bin"; // temporary
+    const catalogue_directory = ".config"; // temporary
 
     //// SECTION
     // dedicated to parts of the program that must run no matter what mode is particularly chosen
@@ -25,43 +27,14 @@ pub fn main(init: std.process.Init) !void {
     defer actors_map.deinit();
     try actors_map.registerActors();
 
-    // at this point, all actors known to the program;
-    for (actors_map.fetch_actors.items) |entry| {
-        std.log.debug("<fetch> {s}", .{entry});
+
+    var catalogue = Catalogue.init(allocator, io);
+    defer catalogue.deinit();
+    try catalogue.parseDirectory(catalogue_directory);
+
+    for (catalogue.scrypts.items) |scrypt| {
+        std.log.info("{s}: {s}", .{scrypt.id, scrypt.source});
     }
-    for (actors_map.install_actors.items) |entry| {
-        std.log.debug("<install> {s}", .{entry});
-    }
-
-
-    // TODO: make catalogue fetching be done through the use of an actor
-    // TWO OPTIONS TO IMPLEMENT IT
-    // form a combined catalogue string THEN register as a list of scrypts
-    // OR
-    // create empty list of scrypts and append to that and do toml parse for each
-    const catalogue =
-        \\ [[scrypts]]
-        \\ id = "procexp"
-        \\ source = "https://live.sysinternals.com/procexp.exe"
-        //\\
-        // \\ [scrypt.roles]
-        // \\ fetch = "http-actor.exe"
-        // \\ install = "single-file-write-actor.exe"
-    ;
-
-    _ = catalogue;
-
-    const Catalogue = struct {
-        scrypts: []struct {
-            id: []const u8,
-            source: []const u8,
-        }
-    };
-
-    var parser = toml.Parser(Catalogue).init(allocator);
-    parser.options.disallow_unknown_fields = true;
-    defer parser.deinit();
-
     _ = argv;
 
     // TODO: setup argument parser in common/arg_parser.zig; for now just use argv
