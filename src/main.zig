@@ -27,9 +27,11 @@ pub fn main(init: std.process.Init) !void {
     defer actors_map.deinit();
     try actors_map.registerActors();
 
-
     var catalogue = Catalogue.init(allocator, io);
     defer catalogue.deinit();
+    // creates and owns its own DirectoryContext during lifetime of the function (defers deinit to end of the call,
+    // not until end of life of catalogue because all thats needed from catalogue is the information, not necessarily
+    // the actual toml files after being parsed or their parent directory (of which is the DirectoryContext)
     try catalogue.parseDirectory(catalogue_directory);
 
     for (catalogue.scrypts.items) |scrypt| {
