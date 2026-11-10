@@ -68,10 +68,8 @@ pub const ActorsMapping = struct {
         }
     }
 
-    pub fn callActor(self: *ActorsMapping, argv: []const []const u8) !void {
-        const name = argv[1];
-        const role = argv[2];
-
+    /// caller MUST MANUALLY FREE memory of returned value using the self.dir_ctx.alloc
+    pub fn callActor(self: *ActorsMapping, name: []const u8, role: []const u8, additional_args: []const []const u8) ![]u8 {
         if (!self.dir_ctx.containsFile(name)) return error.ActorNotDefined;
 
         const full_path = self.dir_ctx.getFullPath(name);
@@ -79,7 +77,23 @@ pub const ActorsMapping = struct {
         if (!self.isActorValid(full_path, role)) return error.ActorInvalidRole;
 
         std.log.info("{s}", .{full_path});
-        // TODO: actually call the actor; remove above line when done; just to debug that it is valid
+
+        const argv = try std.mem.concat(
+            self.dir_ctx.alloc,
+            []const u8,
+            &.{
+                &[_][]const u8{ full_path, role },
+                additional_args,
+            },
+        );
+        defer self.dir_ctx.alloc.free(argv);
+
+        const res = try std.process.run(self.dir_ctx.alloc, self.dir_ctx.io, .{
+            .argv = argv,
+        });
+
+        // allocated by self.dir_ctx.alloc; cannot dealloc because needed by caller function
+        return res.stdout;
     }
 
     pub fn isActorValid(self: *ActorsMapping, full_path: []const u8, role: []const u8) bool {

@@ -37,8 +37,22 @@ pub fn main(init: std.process.Init) !void {
     for (catalogue.scrypts.items) |scrypt| {
         std.log.info("{s}: {s}", .{scrypt.id, scrypt.source});
     }
+
+
+    // // basic parsing atm, later actually do full arg-parsing
+    // const command = argv[1];
+    // const scrypt = argv[2];
     _ = argv;
 
-    // TODO: setup argument parser in common/arg_parser.zig; for now just use argv
-    //try actors_map.callActor(argv);
+
+    const contents = try actors_map.callActor("http-actor", "fetch", &.{
+        "https://live.sysinternals.com/procexp.exe",
+    });
+    defer actors_map.dir_ctx.alloc.free(contents);
+
+    const install_stdout = try actors_map.callActor("single-file-write-actor", "install", &.{
+       contents,
+    });
+    std.log.info("{s}", .{install_stdout});
+    defer actors_map.dir_ctx.alloc.free(install_stdout);
 }

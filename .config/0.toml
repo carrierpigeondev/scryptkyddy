@@ -1,7 +1,19 @@
 [[scrypts]]
-id = "procexp"
-source = "https://live.sysinternals.com/procexp.exe"
+    id = "procexp"
+    source = "https://live.sysinternals.com/procexp.exe"
+    [[scrypts.roles]]
+        role = "fetch"
+        actor = "http-actor"
+    [[scrypts.roles]]
+        role = "install"
+        actor = "single-file-write-actor"
 
 [[scrypts]]
-id = "procexp64"
-source = "https://live.sysinternals.com/procexp64.exe"
+    id = "procexp64"
+    source = "https://live.sysinternals.com/procexp64.exe"
+    [[scrypts.roles]]
+        role = "fetch"
+        actor = "http-actor"
+    [[scrypts.roles]]
+        role = "install"
+        actor = "single-file-write-actor"

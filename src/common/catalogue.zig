@@ -3,9 +3,15 @@ const toml = @import("toml");
 
 const DirectoryContext = @import("directory_context.zig").DirectoryContext;
 
+pub const Role = struct {
+    role: []const u8,
+    actor: []const u8,
+};
+
 pub const Scrypt = struct {
     id: []const u8,
     source: []const u8,
+    roles: []Role,
 };
 
 pub const CatalogueFile = struct {
