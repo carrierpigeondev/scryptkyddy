@@ -71,12 +71,8 @@ pub const ActorsMapping = struct {
     /// caller MUST MANUALLY FREE memory of returned value using the self.dir_ctx.alloc
     pub fn callActor(self: *ActorsMapping, name: []const u8, role: []const u8, additional_args: []const []const u8) ![]u8 {
         if (!self.dir_ctx.containsFile(name)) return error.ActorNotDefined;
-
         const full_path = self.dir_ctx.getFullPath(name);
-
         if (!self.isActorValid(full_path, role)) return error.ActorInvalidRole;
-
-        std.log.info("{s}", .{full_path});
 
         const argv = try std.mem.concat(
             self.dir_ctx.alloc,
@@ -91,7 +87,6 @@ pub const ActorsMapping = struct {
         const res = try std.process.run(self.dir_ctx.alloc, self.dir_ctx.io, .{
             .argv = argv,
         });
-
         // allocated by self.dir_ctx.alloc; cannot dealloc because needed by caller function
         return res.stdout;
     }

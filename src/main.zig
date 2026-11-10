@@ -45,13 +45,14 @@ pub fn main(init: std.process.Init) !void {
     _ = argv;
 
 
-    const contents = try actors_map.callActor("http-actor", "fetch", &.{
+    const contents = try actors_map.callActor("http-actor.exe", "fetch", &.{
         "https://live.sysinternals.com/procexp.exe",
     });
     defer actors_map.dir_ctx.alloc.free(contents);
 
-    const install_stdout = try actors_map.callActor("single-file-write-actor", "install", &.{
-       contents,
+    const install_stdout = try actors_map.callActor("single-file-write-actor.exe", "install", &.{
+        "output_dir",
+        "OUTPUT\\BIN\\program"
     });
     std.log.info("{s}", .{install_stdout});
     defer actors_map.dir_ctx.alloc.free(install_stdout);
