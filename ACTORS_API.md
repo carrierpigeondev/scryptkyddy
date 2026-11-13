@@ -25,7 +25,8 @@ Must write to standard out the contents what has been fetched.
 ### Install
 
 ```
-$2  : Contents
-$3  : Output Directory
-$4  : Output Symlink Path
+$2  : Output Directory
+$3  : Output Symlink Path
 ```
+
+Must read from standard in the contents to install.
