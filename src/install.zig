@@ -105,6 +105,7 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
     }
     if (!scrypt_was_found) {
         std.log.err("Scrypt {s} not found in catalogue. Check if the name is correct.", .{scrypt_name});
+        return error.ScryptNotFound;
     }
 
     // join together paths for the installation directory: e.g., ?/scryptkyddy/scrypts

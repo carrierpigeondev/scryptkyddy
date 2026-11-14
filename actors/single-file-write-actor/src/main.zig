@@ -32,14 +32,10 @@ fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void
 
     // create a file of the name given by the symlink, since it best provides what the program should be called as this
     // writes only a single file which is the necessary executable
-    const file = try outdir.createFile(io, std.fs.path.basename(argv[3]), .{});
-    defer file.close(io);
-
-    var wbuf: [1024]u8 = undefined;
-    var w = file.writer(io, &wbuf);
-
-    try w.interface.writeAll(input_contents);
-    try w.interface.flush();
+    try outdir.writeFile(io, .{
+        .data = input_contents,
+        .sub_path = std.fs.path.basename(argv[3]),
+    });
 
     // api compliance, create a proper symlink
     const path_of_file = try std.fs.path.join(alloc, &.{

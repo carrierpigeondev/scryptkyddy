@@ -11,3 +11,5 @@ docgen_tmp/
 /zig-out/
 **/.zig-cache/
 .env
+/zig-pkg/
+**/zig-pkg/

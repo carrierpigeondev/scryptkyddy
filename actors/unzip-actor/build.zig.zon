@@ -1,0 +1,13 @@
+.{
+    .name = .unzip_actor,
+    .version = "0.0.1",
+    .dependencies = .{
+        .archive = .{
+            .url = "https://github.com/muhammad-fiaz/archive.zig/archive/refs/tags/0.0.3.tar.gz",
+            .hash = "archive-0.0.3-RRAZsDDFAgDWJzQ7IKDIRPlw3SSI9Ahk8OK8zelM9CuS",
+        },
+    },
+    .minimum_zig_version = "0.17.0",
+    .paths = .{""},
+    .fingerprint = 0x121242a84b83e810,
+}

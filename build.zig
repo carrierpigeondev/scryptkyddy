@@ -42,6 +42,7 @@ pub fn build(b: *std.Build) !void {
     // build steps for builtin actors
     addActor(b, "http-actor", path);
     addActor(b, "single-file-write-actor", path);
+    addActor(b, "unzip-actor", path);
 
     //
     // run step
