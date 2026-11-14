@@ -1,0 +1,9 @@
+[[scrypts]]
+    id = "cports"
+    source = "https://www.nirsoft.net/utils/cports-x64.zip"
+    [[scrypts.roles]]
+        role = "fetch"
+        actor = "http-actor"
+    [[scrypts.roles]]
+        role = "install"
+        actor = "unzip-actor"
