@@ -10,3 +10,4 @@ docgen_tmp/
 /actor-bin/
 /zig-out/
 **/.zig-cache/
+.env

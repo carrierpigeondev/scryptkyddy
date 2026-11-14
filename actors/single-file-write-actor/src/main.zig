@@ -41,7 +41,13 @@ fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void
     try w.interface.writeAll(input_contents);
     try w.interface.flush();
 
-    // TODO: api compliance, create a proper symlink
+    // api compliance, create a proper symlink
+    const path_of_file = try std.fs.path.join(alloc, &.{
+        argv[2], std.fs.path.basename(argv[3])
+    });
+    defer alloc.free(path_of_file);
+
+    try std.Io.Dir.cwd().symLink(io, path_of_file, argv[3], .{});
 }
 
 pub fn main(init: std.process.Init) !void {

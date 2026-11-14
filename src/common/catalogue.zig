@@ -76,9 +76,24 @@ pub const Catalogue = struct {
 
         const value = result.value;
         for (value.scrypts) |scrypt| {
+            // need to check to ensure has all necessary roles (fetch and install)
+            var has_fetch = false;
+            var has_install = false;
+            for (scrypt.roles) |role| {
+                if (std.mem.eql(u8, role.role, "fetch")) {
+                    has_fetch = true;
+                } else if (std.mem.eql(u8, role.role, "install")) {
+                    has_install = true;
+                }
+            }
+            if (!(has_fetch and has_install)) {
+                std.log.warn("Could not add {s} from {s} due to lacking either fetch or install.", .{scrypt.id, source});
+                continue;
+            }
+
             self.scrypts.append(self.alloc, scrypt) catch |err| {
-                std.log.warn("Could not parse {s} due to {}.", .{source, err});
-                return;
+                std.log.warn("Could not add {s} from {s} due to {}.", .{scrypt.id, source, err});
+                continue;
             };
         }
     }

@@ -1,8 +1,8 @@
 const std = @import("std");
 
-fn addActor(b: *std.Build, name: []const u8) void {
+fn addActor(b: *std.Build, name: []const u8, path: []const u8) void {
     const cmd = b.addSystemCommand(&.{
-        "zig", "build", "--prefix", "../../actors-bin"
+        "zig", "build", "--prefix", path
     });
 
     cmd.setCwd(b.path(b.pathJoin(&.{
@@ -37,9 +37,11 @@ pub fn build(b: *std.Build) !void {
 
     b.installArtifact(exe);
 
+
+    const path = b.option([]const u8, "actors", "Installation path for actors") orelse "actors-bin";
     // build steps for builtin actors
-    addActor(b, "http-actor");
-    addActor(b, "single-file-write-actor");
+    addActor(b, "http-actor", path);
+    addActor(b, "single-file-write-actor", path);
 
     //
     // run step

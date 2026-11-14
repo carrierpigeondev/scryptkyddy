@@ -1,0 +1,9 @@
+[[scrypts]]
+    id = "toybox"
+    source = "https://landley.net/bin/toybox/latest/toybox-x86_64"
+    [[scrypts.roles]]
+        role = "fetch"
+        actor = "http-actor"
+    [[scrypts.roles]]
+        role = "install"
+        actor = "single-file-write-actor"

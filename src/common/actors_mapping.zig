@@ -68,8 +68,13 @@ pub const ActorsMapping = struct {
         }
     }
 
+    pub const CallActorInputOptions = struct {
+        allowsInput: bool = false,
+        input: []u8 = undefined,
+    };
+
     /// caller MUST MANUALLY FREE memory of returned value using the self.dir_ctx.alloc
-    pub fn callActor(self: *ActorsMapping, name: []const u8, role: []const u8, additional_args: []const []const u8) ![]u8 {
+    pub fn callActor(self: *ActorsMapping, name: []const u8, role: []const u8, additional_args: []const []const u8, opt: CallActorInputOptions) ![]u8 {
         if (!self.dir_ctx.containsFile(name)) return error.ActorNotDefined;
         const full_path = self.dir_ctx.getFullPath(name);
         if (!self.isActorValid(full_path, role)) return error.ActorInvalidRole;
@@ -84,11 +89,40 @@ pub const ActorsMapping = struct {
         );
         defer self.dir_ctx.alloc.free(argv);
 
-        const res = try std.process.run(self.dir_ctx.alloc, self.dir_ctx.io, .{
-            .argv = argv,
-        });
-        // allocated by self.dir_ctx.alloc; cannot dealloc because needed by caller function
-        return res.stdout;
+        if (opt.allowsInput) {
+            var child = try std.process.spawn(self.dir_ctx.io, .{
+                .argv = argv,
+                .stdin = .pipe,
+                .stdout = .pipe,
+            });
+            errdefer child.kill(self.dir_ctx.io);
+
+            try child.stdin.?.writeStreamingAll(self.dir_ctx.io, opt.input);
+
+            child.stdin.?.close(self.dir_ctx.io);
+            child.stdin = null;
+
+            var rbuf: [4096]u8 = undefined;
+            var r = child.stdout.?.readerStreaming(self.dir_ctx.io, &rbuf);
+            const stdout = try r.interface.allocRemaining(self.dir_ctx.alloc,.unlimited,);
+            errdefer self.dir_ctx.alloc.free(stdout);
+
+            const term = try child.wait(self.dir_ctx.io);
+
+            if (!term.success()) {
+                return error.ActorProcessFailed;
+            }
+
+            return stdout;
+
+        } else {
+            const res = try std.process.run(self.dir_ctx.alloc, self.dir_ctx.io, .{
+                .argv = argv,
+            });
+
+            // allocated by self.dir_ctx.alloc; cannot dealloc because needed by caller function
+            return res.stdout;
+        }
     }
 
     pub fn isActorValid(self: *ActorsMapping, full_path: []const u8, role: []const u8) bool {
