@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(exe);
 
 
-    const path = b.option([]const u8, "actors", "Installation path for actors") orelse "actors-bin";
+    const path = b.option([]const u8, "actors", "Installation path for actors") orelse "../../actors-bin";
     // build steps for builtin actors
     addActor(b, "http-actor", path);
     addActor(b, "single-file-write-actor", path);
