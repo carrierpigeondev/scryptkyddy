@@ -6,4 +6,4 @@
         actor = "http-actor"
     [[scrypts.roles]]
         role = "install"
-        actor = "unzip-actor"
+        actor = "unzip-actor" # not yet implemented as a builtin actor
