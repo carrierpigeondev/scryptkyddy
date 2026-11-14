@@ -1,5 +1,5 @@
 [[scrypts]]
-    id = "cports"
+    id = "cports.exe"
     source = "https://www.nirsoft.net/utils/cports-x64.zip"
     [[scrypts.roles]]
         role = "fetch"

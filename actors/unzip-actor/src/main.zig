@@ -26,6 +26,8 @@ fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void
     var zip_archive: zip.ZipArchive = try .init(alloc, input_contents);
     defer zip_archive.deinit();
 
+    const target_name = std.fs.path.basename(argv[3]);
+    var executable_path: ?[]const u8 = null;
     for (zip_archive.entries.items) |entry| {
         // handles the case of empty directories needing to be created
         if (std.mem.endsWith(u8, entry.name, "/")) {
@@ -48,7 +50,24 @@ fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void
             .data = extracted_contents,
             .sub_path = entry.name,
         });
+
+        if (std.mem.eql(u8, std.fs.path.basename(entry.name), target_name)) {
+            executable_path = entry.name;
+        }
     }
+
+    // then also create the symlink to the found executable or error if nothing was detected
+    //
+    // the files are already extracted however, so the user... if they know what they're doing... can manually symlink
+    // or maybe even do something with a postinstallation role down the line
+    const entry_path = executable_path orelse return error.ExecutableNotFound;
+
+    const path_of_file = try std.fs.path.join(alloc, &.{
+        argv[2], entry_path,
+    });
+    defer alloc.free(path_of_file);
+
+    try std.Io.Dir.cwd().symLink(io, path_of_file, argv[3], .{});
 }
 
 pub fn main(init: std.process.Init) !void {
