@@ -1,4 +1,5 @@
 const std = @import("std");
+const zip = @import("archive").algorithms.zip;
 
 fn broadcast(io: std.Io) !void {
     try std.Io.File.stdout().writeStreamingAll(io, "install");
@@ -10,36 +11,65 @@ fn broadcast(io: std.Io) !void {
 ///   - argv[2] : Output Directory
 ///   - argv[3] : Output Symlink Path
 ///
-///  writes contents to a single file of the same name as the symlink in the output directory, and creates the symlink
+///  extracts contents, detects the primary file name, (NYI: and creates a symlink)
 
 fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void {
     var stdin_buffer: [4096]u8 = undefined;
 
-    // NOTE:
+    // // NOTE:
     // This MUST be a .readerStreaming and not a .reader despite the latter working on Linux; I presume some issue is
     // present only in the Windows implementation on how Zig reads from an anonymous pipe, specifically with binary
     // data, which is exactly what is needed here; however, .readStreaming does indeed work on both platforms (I'm
     // pretty sure, haven't test Linux as of writing this comment, so I'm just assuming, and you know what they say
     // about assuming-- it is perfectly fine for 'production' code. haha, I hope no one uses this garbage in production)
     var r = std.Io.File.stdin().readerStreaming(io, &stdin_buffer);
-
     const input_contents = try r.interface.allocRemaining(alloc, .unlimited);
     defer alloc.free(input_contents);
 
-    // api spec requires creating a directory for the file, not just writing the file
     const outdir = try std.Io.Dir.cwd().createDirPathOpen(io, argv[2], .{});
     defer outdir.close(io);
 
-    // create a file of the name given by the symlink, since it best provides what the program should be called as this
-    // writes only a single file which is the necessary executable
-    try outdir.writeFile(io, .{
-        .data = input_contents,
-        .sub_path = std.fs.path.basename(argv[3]),
-    });
+    var zip_archive: zip.ZipArchive = try .init(alloc, input_contents);
+    defer zip_archive.deinit();
 
-    // api compliance, create a proper symlink
+    const target_name = std.fs.path.basename(argv[3]);
+    var executable_path: ?[]const u8 = null;
+    for (zip_archive.entries.items) |entry| {
+        // handles the case of empty directories needing to be created
+        if (std.mem.endsWith(u8, entry.name, "/")) {
+            const dir = try outdir.createDirPathOpen(io, entry.name, .{});
+            dir.close(io);
+            continue; // since not a file, continue to next entry
+        }
+
+        // when the entry is a file, create its parent directories (handles the majority of cases where dir needs to be
+        // created) and continue because the entry itself is a file
+        if (std.fs.path.dirname(entry.name)) |parent| {
+            const dir = try outdir.createDirPathOpen(io, parent, .{});
+            dir.close(io);
+        }
+
+        const extracted_contents = try entry.extract(alloc, input_contents);
+        defer alloc.free(extracted_contents);
+
+        try outdir.writeFile(io, .{
+            .data = extracted_contents,
+            .sub_path = entry.name,
+        });
+
+        if (std.mem.eql(u8, std.fs.path.basename(entry.name), target_name)) {
+            executable_path = entry.name;
+        }
+    }
+
+    // then also create the symlink to the found executable or error if nothing was detected
+    //
+    // the files are already extracted however, so the user... if they know what they're doing... can manually symlink
+    // or maybe even do something with a postinstallation role down the line
+    const entry_path = executable_path orelse return error.ExecutableNotFound;
+
     const path_of_file = try std.fs.path.join(alloc, &.{
-        argv[2], std.fs.path.basename(argv[3])
+        argv[2], entry_path,
     });
     defer alloc.free(path_of_file);
 

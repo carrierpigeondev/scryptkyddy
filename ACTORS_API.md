@@ -1,7 +1,7 @@
 # Actors API
-## Version 0.0.1-202610301533
+## Version 0.0.1
 
-An actor is an executable that takes the following parameters:
+An Actor is an executable that takes the following parameters:
 
 ```
 $0  : Executable Name (Standard; non-specific to ScryptKyddy)
@@ -9,10 +9,10 @@ $1  : Role
 $...: Role Parameters
 ```
 
-An actor must define the `broadcast` role, which prints out a new-line separated list of which other roles the actor
+An Actor must define the `broadcast` Role, which prints out a new-line separated list of which other Roles the Actor
 implements.
 
-The following is a list of all other roles an actor may implement:
+The following is a list of all other Roles an Actor may implement:
 
 ### Fetch
 

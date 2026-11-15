@@ -2,6 +2,9 @@ const std = @import("std");
 
 const DirectoryContext = @import("directory_context.zig").DirectoryContext;
 
+const http_actor = @import("../builtin-actors/http-actor.zig");
+const single_file_write_actor = @import("../builtin-actors/single-file-write-actor.zig");
+
 /// maps current actors to arraylists for their available roles
 pub const ActorsMapping = struct {
     alloc: std.mem.Allocator,
@@ -75,6 +78,40 @@ pub const ActorsMapping = struct {
 
     /// caller MUST MANUALLY FREE memory of returned value using the self.dir_ctx.alloc
     pub fn callActor(self: *ActorsMapping, name: []const u8, role: []const u8, additional_args: []const []const u8, opt: CallActorInputOptions) ![]u8 {
+        // builtin actors are called differently since they are a part of this project (since they are needed for
+        // bootstrapping other actors; therefore, not in the actorsMapping
+
+        // only fetch implemented for http-actor; so, if a user wants to make their own http-actor with a different role
+        // theres no need to impede on their interesting life choices
+        if (std.mem.eql(u8, name, "http-actor") and std.mem.eql(u8, role, "fetch")) {
+            const _argv = try std.mem.concat(
+                self.dir_ctx.alloc,
+                []const u8,
+                &.{
+                    &[_][]const u8{ "http-actor", role },
+                    additional_args,
+                },
+            );
+            defer self.dir_ctx.alloc.free(_argv);
+            return http_actor.fetch(self.dir_ctx.io, self.dir_ctx.alloc, _argv);
+        }
+
+        // only fetch implemented for single-file-write-actor; so, if a user wants to make their own
+        // single-file-write-actor with a different role theres no need to impede on their interesting life choices
+        if (std.mem.eql(u8, name, "single-file-write-actor") and std.mem.eql(u8, role, "install")) {
+            const _argv = try std.mem.concat(
+                self.dir_ctx.alloc,
+                []const u8,
+                &.{
+                    &[_][]const u8{ "single-file-write-actor", role },
+                    additional_args,
+                },
+            );
+            defer self.dir_ctx.alloc.free(_argv);
+            try single_file_write_actor.install(self.dir_ctx.io, self.dir_ctx.alloc, opt.input, _argv);
+            return "";
+        }
+
         if (!self.dir_ctx.containsFile(name)) return error.ActorNotDefined;
         const full_path = self.dir_ctx.getFullPath(name);
         if (!self.isActorValid(full_path, role)) return error.ActorInvalidRole;

@@ -1,19 +1,5 @@
 const std = @import("std");
 
-fn addActor(b: *std.Build, name: []const u8, path: []const u8) void {
-    const cmd = b.addSystemCommand(&.{
-        "zig", "build", "--prefix", path
-    });
-
-    cmd.setCwd(b.path(b.pathJoin(&.{
-        "actors", name
-    })));
-    cmd.has_side_effects = true;
-
-    const step = b.step(name, b.fmt("Builds actor: {s}", .{name}));
-    step.dependOn(&cmd.step);
-}
-
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -36,13 +22,6 @@ pub fn build(b: *std.Build) !void {
     exe.root_module.addImport("toml", toml.module("toml"));
 
     b.installArtifact(exe);
-
-
-    const path = b.option([]const u8, "actors", "Installation path for actors") orelse "../../actors-bin";
-    // build steps for builtin actors
-    addActor(b, "http-actor", path);
-    addActor(b, "single-file-write-actor", path);
-    addActor(b, "unzip-actor", path);
 
     //
     // run step
