@@ -61,8 +61,8 @@ pub fn bootstrap(io: std.Io, env: *std.process.Environ.Map) !void {
     try local_catalogue_dir.writeFile(io, .{
         .data =
             \\[[scrypts]]
-            \\    id = "toybox"
-            \\    source = "https://landley.net/bin/toybox/latest/toybox-x86_64"
+            \\    id = "extra-actors"
+            \\    source = "https://raw.githubusercontent.com/carrierpigeondev/extra-actors/refs/heads/master/extra-actors-catalogue.toml"
             \\    [[scrypts.roles]]
             \\        role = "fetch"
             \\        actor = "http-actor"
