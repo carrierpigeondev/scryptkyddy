@@ -47,6 +47,7 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
         return error.UndefinedEnvironmentVariable;
     }
 
+
     //// SECTION
     // dedicated to parts of the program that must run no matter what mode is particularly chosen
 
@@ -78,7 +79,18 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
     // dedicated to getting necessary information prior to scrypt actors
 
     // TODO: get from argv properly, with a custom argparser
-    const scrypt_name = argv[1];
+    var scrypt_name: []const u8 = argv[1];
+
+    // different output directory and name if has a modifier suffix
+    var is_actor = false;
+    var is_catalogue = false;
+    if (std.mem.endsWith(u8, scrypt_name, "@Actor")) {
+        scrypt_name = scrypt_name[0 .. scrypt_name.len - 6]; // get all before "@Actor"
+        is_actor = true;
+    } else if (std.mem.endsWith(u8, scrypt_name, "@Catalogue")) {
+        scrypt_name = scrypt_name[0 .. scrypt_name.len - 10]; // get all before "@Catalogue"
+        is_catalogue = true;
+    }
 
     // placeholders in order to load from scrypt
     var fetch_actor_name: []const u8 = "";
@@ -109,18 +121,32 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
     }
 
     // join together paths for the installation directory: e.g., ?/scryptkyddy/scrypts
-    const scrypt_install_directory = try std.fs.path.join(allocator, &.{
-        env_res.universal_scrypt_install_directory,
-        scrypt_name,
-    });
-    defer allocator.free(scrypt_install_directory);
-    // and for the bin directory (symlinks): e.g., ?/scryptkyddy/bin
-    const scrypt_symlink_path = try std.fs.path.join(allocator, &.{
-        env_res.universal_scrypt_symlink_directory,
-        scrypt_name,
-    });
-    defer allocator.free(scrypt_symlink_path);
+    // const scrypt_install_directory = try std.fs.path.join(allocator, &.{
+    //     env_res.universal_scrypt_install_directory,
+    //     scrypt_name,
+    // });
 
+    const scrypt_install_directory = if (is_actor) env_res.actor_directory
+    else if (is_catalogue) env_res.catalogue_directory
+    else // a regular scrypt, so should use regular path
+        try std.fs.path.join(allocator, &.{
+            env_res.universal_scrypt_install_directory,
+            scrypt_name,
+        });
+    defer if (!is_actor and !is_catalogue) {
+        allocator.free(scrypt_install_directory);
+    };
+
+    // and for the bin directory (symlinks): e.g., ?/scryptkyddy/bin
+    const scrypt_symlink_path = if (is_actor or is_catalogue) ""
+    else
+        try std.fs.path.join(allocator, &.{
+            env_res.universal_scrypt_symlink_directory,
+            scrypt_name,
+        });
+    defer if (!is_actor and !is_catalogue) {
+        allocator.free(scrypt_symlink_path);
+    };
 
     //// SECTION
     // dedicated to running actors
@@ -132,6 +158,7 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
 
     const install_stdout = try actors_map.callActor(install_actor_name, "install", &.{
         scrypt_install_directory,
+        scrypt_name,
         scrypt_symlink_path,
     }, .{
         .allowsInput = true,

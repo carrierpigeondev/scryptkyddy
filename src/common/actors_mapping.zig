@@ -96,7 +96,7 @@ pub const ActorsMapping = struct {
             return http_actor.fetch(self.dir_ctx.io, self.dir_ctx.alloc, _argv);
         }
 
-        // only fetch implemented for single-file-write-actor; so, if a user wants to make their own
+        // only install implemented for single-file-write-actor; so, if a user wants to make their own
         // single-file-write-actor with a different role theres no need to impede on their interesting life choices
         if (std.mem.eql(u8, name, "single-file-write-actor") and std.mem.eql(u8, role, "install")) {
             const _argv = try std.mem.concat(
@@ -109,10 +109,13 @@ pub const ActorsMapping = struct {
             );
             defer self.dir_ctx.alloc.free(_argv);
             try single_file_write_actor.install(self.dir_ctx.io, self.dir_ctx.alloc, opt.input, _argv);
-            return "";
+            return try self.dir_ctx.alloc.dupe(u8, ""); // must return something allocated so that the memory
+                                                               // can be properly 'freed'
         }
 
+        // actually error instead of waiting for something else to fail, which was the old way of doing things
         if (!self.dir_ctx.containsFile(name)) return error.ActorNotDefined;
+
         const full_path = self.dir_ctx.getFullPath(name);
         if (!self.isActorValid(full_path, role)) return error.ActorInvalidRole;
 

@@ -9,7 +9,8 @@ fn broadcast(io: std.Io) !void {
 ///   - argv[0] : program name
 ///   - argv[1] : "install"
 ///   - argv[2] : Output Directory
-///   - argv[3] : Output Symlink Path
+///   - argv[3] : Output Name
+///   - argv[4] : Output Symlink Path
 ///
 ///  extracts contents, detects the primary file name, (NYI: and creates a symlink)
 
@@ -32,7 +33,6 @@ fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void
     var zip_archive: zip.ZipArchive = try .init(alloc, input_contents);
     defer zip_archive.deinit();
 
-    const target_name = std.fs.path.basename(argv[3]);
     var executable_path: ?[]const u8 = null;
     for (zip_archive.entries.items) |entry| {
         // handles the case of empty directories needing to be created
@@ -57,9 +57,14 @@ fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void
             .sub_path = entry.name,
         });
 
-        if (std.mem.eql(u8, std.fs.path.basename(entry.name), target_name)) {
+        if (std.mem.eql(u8, std.fs.path.basename(entry.name), argv[3])) {
             executable_path = entry.name;
         }
+    }
+
+    // do not create symlink if left empty
+    if (std.mem.eql(u8, argv[4], "")) {
+        return;
     }
 
     // then also create the symlink to the found executable or error if nothing was detected
@@ -73,7 +78,13 @@ fn install(io: std.Io, alloc: std.mem.Allocator, argv: []const []const u8) !void
     });
     defer alloc.free(path_of_file);
 
-    try std.Io.Dir.cwd().symLink(io, path_of_file, argv[3], .{});
+    return std.Io.Dir.cwd().symLink(io, path_of_file, argv[4], .{}) catch |err| {
+        if (err == std.Io.Dir.SymLinkError.PathAlreadyExists) {
+            return;
+        } else {
+            return err;
+        }
+    };
 }
 
 pub fn main(init: std.process.Init) !void {

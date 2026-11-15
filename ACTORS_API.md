@@ -26,7 +26,12 @@ Must write to standard out the contents what has been fetched.
 
 ```
 $2  : Output Directory
-$3  : Output Symlink Path
+$3  : Output Name
+$4  : Output Symlink Path
 ```
 
 Must read from standard in the contents to install.
+
+If the Output Symlink Path is blank (an empty string) then the Actor must not try to create the file. Furthermore, the
+Actor must return success even if the symlink already exists (so must properly handle file exists errors if a symlink
+creation can return such an error).
