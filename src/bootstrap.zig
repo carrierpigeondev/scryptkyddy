@@ -69,6 +69,15 @@ pub fn bootstrap(io: std.Io, env: *std.process.Environ.Map) !void {
             \\    [[scrypts.roles]]
             \\        role = "install"
             \\        actor = "single-file-write-actor"
+            \\[[scrypts]]
+            \\    id = "extra-catalogues"
+            \\    source = "https://raw.githubusercontent.com/carrierpigeondev/extra-catalogues/refs/heads/main/extra-catalogues-catalogue.toml"
+            \\    [[scrypts.roles]]
+            \\        role = "fetch"
+            \\        actor = "http-actor"
+            \\    [[scrypts.roles]]
+            \\        role = "install"
+            \\        actor = "single-file-write-actor"
         ,
         .sub_path = "00_default_catalogue.toml"
     });
