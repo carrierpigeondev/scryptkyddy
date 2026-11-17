@@ -34,6 +34,9 @@ pub fn install(io: std.Io, alloc: std.mem.Allocator, input_contents: []const u8,
     });
     defer alloc.free(path_of_file);
 
+    // this will fail on Windows
+    // that is okay; it is an issue of the specific computer not supporting
+    // basic filesystem functionality
     return std.Io.Dir.cwd().symLink(io, path_of_file, argv[4], .{}) catch |err| {
         if (err == std.Io.Dir.SymLinkError.PathAlreadyExists) {
             return;
