@@ -13,6 +13,13 @@ pub const ActorsMapping = struct {
     fetch_actors: std.ArrayList([]const u8),
     install_actors: std.ArrayList([]const u8),
 
+    // e.g., check checksums with different algorithms (SHA256, MD5, etc.)
+    integrity_actors: std.ArrayList([]const u8),
+    // e.g., GCC, MSVC, Zig, etc.
+    compile_actors: std.ArrayList([]const u8),
+    // e.g., symlink (with exec permission add) actor for Linux or hardlink for Windows
+    link_actors: std.ArrayList([]const u8),
+
     pub fn init(actor_directory: []const u8, io: std.Io, allocator: std.mem.Allocator) !ActorsMapping {
         var dir_ctx = DirectoryContext.init(
             actor_directory,
@@ -24,8 +31,11 @@ pub const ActorsMapping = struct {
         return .{
             .alloc = allocator,
             .dir_ctx = dir_ctx,
-            .fetch_actors = std.ArrayList([]const u8).empty,
-            .install_actors = std.ArrayList([]const u8).empty,
+            .fetch_actors = .empty,
+            .install_actors = .empty,
+            .integrity_actors = .empty,
+            .compile_actors = .empty,
+            .link_actors = .empty,
         };
     }
 
@@ -35,6 +45,9 @@ pub const ActorsMapping = struct {
         // the DirectoryContext for the actors owns and frees the paths themselves, so no 2nd free here
         self.fetch_actors.deinit(self.alloc);
         self.install_actors.deinit(self.alloc);
+        self.integrity_actors.deinit(self.alloc);
+        self.compile_actors.deinit(self.alloc);
+        self.link_actors.deinit(self.alloc);
     }
 
     pub fn registerActors(self: *ActorsMapping) !void {
@@ -65,6 +78,18 @@ pub const ActorsMapping = struct {
                 }
                 if (std.mem.eql(u8, role, "install")) {
                     try self.install_actors.append(self.alloc, full_path);
+                    continue;
+                }
+                if (std.mem.eql(u8, role, "integrity")) {
+                    try self.integrity_actors.append(self.alloc, full_path);
+                    continue;
+                }
+                if (std.mem.eql(u8, role, "compile")) {
+                    try self.compile_actors.append(self.alloc, full_path);
+                    continue;
+                }
+                if (std.mem.eql(u8, role, "link")) {
+                    try self.link_actors.append(self.alloc, full_path);
                     continue;
                 }
             }
@@ -175,6 +200,27 @@ pub const ActorsMapping = struct {
         }
         if (std.mem.eql(u8, role, "install")) {
             for (self.install_actors.items) |entry| {
+                if (std.mem.eql(u8, entry, full_path)) {
+                    return true;
+                }
+            }
+        }
+        if (std.mem.eql(u8, role, "integrity")) {
+            for (self.integrity_actors.items) |entry| {
+                if (std.mem.eql(u8, entry, full_path)) {
+                    return true;
+                }
+            }
+        }
+        if (std.mem.eql(u8, role, "compile")) {
+            for (self.compile_actors.items) |entry| {
+                if (std.mem.eql(u8, entry, full_path)) {
+                    return true;
+                }
+            }
+        }
+        if (std.mem.eql(u8, role, "link")) {
+            for (self.link_actors.items) |entry| {
                 if (std.mem.eql(u8, entry, full_path)) {
                     return true;
                 }

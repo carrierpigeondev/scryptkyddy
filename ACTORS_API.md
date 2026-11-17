@@ -1,5 +1,5 @@
 # Actors API
-## Version 0.0.1
+## Version 0.0.2 (W.I.P.)
 
 An Actor is an executable that takes the following parameters:
 
@@ -40,3 +40,9 @@ It is expected behavior for a functional symlink to not be created on the Window
 not support symlink creation as do Linux-based operating systems. It is permissible behavior for an Actor to thus not
 create a symlink, try and fail to create a symlink, or warn the user that a symlink is not created; but the Install Role
 ought not to create another form of link to the file on Windows.
+
+### Integrity
+
+### Compile
+
+### Link

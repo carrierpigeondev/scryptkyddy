@@ -5,6 +5,7 @@ const EnvironmentLoader = @import("common/environment_loader.zig");
 const DirectoryContext = @import("common/directory_context.zig").DirectoryContext;
 const ActorsMapping = @import("common/actors_mapping.zig").ActorsMapping;
 const Catalogue = @import("common//catalogue.zig").Catalogue;
+const Role = @import("common//catalogue.zig").Role;
 
 
 pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const u8, env: *std.process.Environ.Map) !void {
@@ -97,6 +98,10 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
     var fetch_actor_url: []const u8 = "";
     var install_actor_name: []const u8 = "";
 
+    var integrity_role: *Role = undefined;
+    var compile_role: *Role = undefined;
+    var link_role: *Role = undefined;
+
     // populates the above variables
     var scrypt_was_found = false;
     for (catalogue.scrypts.items) |scrypt| {
@@ -105,12 +110,18 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
         // as it ceases on the first encounter of a scrypt with the id, priority can be managed by the user through the
         // order of files in the directory (or, later when impl, list of remotes in a config file)
 
-        for (scrypt.roles) |role| {
+        for (scrypt.roles) |*role| {
             if (std.mem.eql(u8, role.role, "fetch")) {
                 fetch_actor_name = role.actor;
                 fetch_actor_url = scrypt.source;
             } else if (std.mem.eql(u8, role.role, "install")) {
                 install_actor_name = role.actor;
+            } else if (std.mem.eql(u8, role.role, "integrity")) {
+                integrity_role = role;
+            } else if (std.mem.eql(u8, role.role, "compile")) {
+                compile_role = role;
+            } else if (std.mem.eql(u8, role.role, "link")) {
+                link_role = role;
             }
         }
         break; // here is the break and thus chooses of first priority
