@@ -27,7 +27,6 @@ Must write to standard out the contents what has been fetched.
 ```
 $2  : Output Directory
 $3  : Output Name
-$4  : Output Symlink Path
 ```
 
 Must read from standard in the contents to install.
@@ -46,3 +45,8 @@ ought not to create another form of link to the file on Windows.
 ### Compile
 
 ### Link
+
+```
+$2  : Output Scrypt Path
+$3  : Output Symlink path
+```

@@ -4,6 +4,7 @@ const DirectoryContext = @import("directory_context.zig").DirectoryContext;
 
 const http_actor = @import("../builtin-actors/http-actor.zig");
 const single_file_write_actor = @import("../builtin-actors/single-file-write-actor.zig");
+const symlink_actor = @import("../builtin-actors/symlink-actor.zig");
 
 /// maps current actors to arraylists for their available roles
 pub const ActorsMapping = struct {
@@ -133,7 +134,22 @@ pub const ActorsMapping = struct {
                 },
             );
             defer self.dir_ctx.alloc.free(_argv);
-            try single_file_write_actor.install(self.dir_ctx.io, self.dir_ctx.alloc, opt.input, _argv);
+            return single_file_write_actor.install(self.dir_ctx.io, self.dir_ctx.alloc, opt.input, _argv);
+        }
+
+        // only link implemented for symlink-actor; so, if a user wants to make their own
+        // symlink-actor with a different role theres no need to impede on their interesting life choices
+        if (std.mem.eql(u8, name, "symlink-actor") and std.mem.eql(u8, role, "link")) {
+            const _argv = try std.mem.concat(
+                self.dir_ctx.alloc,
+                []const u8,
+                &.{
+                    &[_][]const u8{ "symlink-actor", role },
+                    additional_args,
+                },
+            );
+            defer self.dir_ctx.alloc.free(_argv);
+            try symlink_actor.link(self.dir_ctx.io, _argv);
             return try self.dir_ctx.alloc.dupe(u8, ""); // must return something allocated so that the memory
                                                                // can be properly 'freed'
         }

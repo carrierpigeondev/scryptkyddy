@@ -5,14 +5,15 @@ const std = @import("std");
 ///   - argv[1] : "install"
 ///   - argv[2] : Output Directory
 ///   - argv[3] : Output Name
-///   - argv[4] : Output Symlink Path
 ///
 ///  writes contents to a single file of the same name as the symlink in the output directory, and creates the symlink
 ///
 ///  contains extra input_contents arg since called as a function, not as a subprocess like other actors because it is a
 ///  builtin actor. for an actual example of how you ought to make an install actor, see install() from the unzip-actor,
 ///  which actually reads from stdin
-pub fn install(io: std.Io, alloc: std.mem.Allocator, input_contents: []const u8, argv: []const []const u8) !void {
+///
+///  in other kind of install role must write to stdout the path it installs to; because builtin, return []u8
+pub fn install(io: std.Io, alloc: std.mem.Allocator, input_contents: []const u8, argv: []const []const u8) ![]u8 {
     // api spec requires creating a directory for the file, not just writing the file
     const outdir = try std.Io.Dir.cwd().createDirPathOpen(io, argv[2], .{});
     defer outdir.close(io);
@@ -23,32 +24,9 @@ pub fn install(io: std.Io, alloc: std.mem.Allocator, input_contents: []const u8,
         .sub_path = argv[3],
     });
 
-    // do not create symlink if left empty
-    if (std.mem.eql(u8, argv[4], "")) {
-        return;
-    }
-
-    // api compliance, create a proper symlink
-    const path_of_file = try std.fs.path.join(alloc, &.{
+    // would write to stdout in normal Role; here returns
+    // e.g., unzip actor writes the returned path
+    return try std.fs.path.join(alloc, &.{
         argv[2], argv[3]
     });
-    defer alloc.free(path_of_file);
-
-    // this will fail on Windows
-    // that is okay; it is an issue of the specific computer not supporting
-    // basic filesystem functionality
-    if (std.mem.eql(u8, std.os.name, "windows")) {
-        std.log.warn(
-            \\Cannot make symlink from Install Role on Windows.
-            \\A link might be able to be made possible in a later API version with a dedicated Link Role.
-        , .{});
-        return;
-    }
-    return std.Io.Dir.cwd().symLink(io, path_of_file, argv[4], .{}) catch |err| {
-        if (err == std.Io.Dir.SymLinkError.PathAlreadyExists) {
-            return;
-        } else {
-            return err;
-        }
-    };
 }

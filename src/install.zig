@@ -98,9 +98,9 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
     var fetch_actor_url: []const u8 = "";
     var install_actor_name: []const u8 = "";
 
-    var integrity_role: *Role = undefined;
-    var compile_role: *Role = undefined;
-    var link_role: *Role = undefined;
+    var integrity_role: ?*Role = null;
+    var compile_role: ?*Role = null;
+    var link_role: ?*Role = null;
 
     // populates the above variables
     var scrypt_was_found = false;
@@ -169,17 +169,28 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
 
     const install_stdout = try actors_map.callActor(install_actor_name, "install", &.{
         scrypt_install_directory,
-        scrypt_name,
-        scrypt_symlink_path,
+        scrypt_name
     }, .{
         .allowsInput = true,
         .input = contents,
     });
     defer actors_map.dir_ctx.alloc.free(install_stdout);
 
-    std.log.info("Successfully installed {s} from {s} to directory {s}/. Try it out!", .{
-        scrypt_name, fetch_actor_url, env_res.universal_scrypt_symlink_directory
+    std.log.info("Successfully installed {s} from {s} to directory {s}. Try it out!", .{
+        scrypt_name, fetch_actor_url, env_res.universal_scrypt_install_directory
     });
 
-    std.log.warn("NOTICE: you may need to make the symlink executable", .{});
+    if (link_role) |l| {
+        std.log.debug("Debug: Creating a symlink {s}", .{install_stdout});
+
+        const link_stdout = try actors_map.callActor(l.actor, "link", &.{
+            install_stdout,
+            scrypt_symlink_path,
+        }, .{});
+        defer actors_map.dir_ctx.alloc.free(link_stdout);
+        std.log.info("Successfully made link for scrypt {s} to directory {s}.", .{
+            install_stdout, env_res.universal_scrypt_symlink_directory
+        });
+        std.log.info("Note: you may have to make the link executable if on a Linux system.", .{});
+    }
 }
