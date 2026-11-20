@@ -31,14 +31,9 @@ $3  : Output Name
 
 Must read from standard in the contents to install.
 
-If the Output Symlink Path is blank (an empty string) then the Actor must not try to create the file. Furthermore, the
-Actor must return success even if the symlink already exists (so must properly handle file exists errors if a symlink
-creation can return such an error).
-
-It is expected behavior for a functional symlink to not be created on the Windows operating system, because Windows does
-not support symlink creation as do Linux-based operating systems. It is permissible behavior for an Actor to thus not
-create a symlink, try and fail to create a symlink, or warn the user that a symlink is not created; but the Install Role
-ought not to create another form of link to the file on Windows.
+Must write to standard out the joined path of where the main file (e.g., an executable) has been written (i.e., Output
+Scrypt Path). Does not need to make the main file executable, because might also be used for non-executables (Actors and
+Catalogues).
 
 ### Integrity
 
@@ -50,3 +45,5 @@ ought not to create another form of link to the file on Windows.
 $2  : Output Scrypt Path
 $3  : Output Symlink path
 ```
+
+Writes nothing to standard out. Must create working link to the file, and make the scrypt main file executable.

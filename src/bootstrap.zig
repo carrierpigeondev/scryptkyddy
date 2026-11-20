@@ -81,11 +81,4 @@ pub fn bootstrap(io: std.Io, env: *std.process.Environ.Map) !void {
         ,
         .sub_path = "00_default_catalogue.toml"
     });
-
-
-    //// STEP 4)
-    // ask the user if they want to add the basic http-actor and single-file-write-actor, which are necessary to add
-    // scrypts, as well as more actors and more catalogues (otherwise not really functional)
-
-    std.log.warn("not yet implemented; try `zig build http-actor -Dactors=$SCRYPTKYDDY_ACTORS` and `zig build single-file-write-actor -Dactors=$SCRYPTKYDDY_ACTORS`", .{});
 }
