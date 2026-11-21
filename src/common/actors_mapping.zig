@@ -52,7 +52,9 @@ pub const ActorsMapping = struct {
         self.link_actors.deinit(self.alloc);
     }
 
-    pub fn registerActors(self: *ActorsMapping) !void {
+    pub fn registerActors(self: *ActorsMapping, alloc: std.mem.Allocator) ![]const []const u8 {
+        var unproductive_actors: std.ArrayList([]const u8) = .empty;
+
         // parses through all actors in the directory context
         for (self.dir_ctx.children_names.items) |entry| {
             // call the broadcast function to know which roles the actor implements
@@ -63,6 +65,7 @@ pub const ActorsMapping = struct {
                     "broadcast"
                 }
             }) catch |err| {
+                try unproductive_actors.append(alloc, entry);
                 // this will occur whenever a system cannot execute command (i.e., exe on Linux; elf on Windows)
                 std.log.warn("Failed to run the actor {s} due to {}. Forced to skip.", .{entry, err});
                 continue;
@@ -96,6 +99,8 @@ pub const ActorsMapping = struct {
                 }
             }
         }
+
+        return try unproductive_actors.toOwnedSlice(alloc);
     }
 
     pub const CallActorInputOptions = struct {

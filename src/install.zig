@@ -61,7 +61,7 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
         return err;
     };
     defer actors_map.deinit();
-    try actors_map.registerActors();
+    _ = try actors_map.registerActors(allocator);
 
     var catalogue = Catalogue.init(allocator, io);
     defer catalogue.deinit();
@@ -72,7 +72,7 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
 
     std.log.info("Assembled catalogue of {} scrypts from {} parts.", .{
         catalogue.scrypts.items.len,
-        catalogue.results.items.len
+        catalogue.results.items.len,
     });
 
 
