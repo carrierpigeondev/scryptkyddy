@@ -1,9 +1,36 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 const EnvironmentLoader = @import("common/environment_loader.zig");
 
-pub fn bootstrap(io: std.Io, env: *std.process.Environ.Map) !void {
+fn per_os_setenv(alloc: std.mem.Allocator, io: std.Io, key: []const u8, val: []const u8) !void {
+    if (builtin.os.tag == .windows) {
+        _ = try std.process.run(alloc, io, .{
+            .argv = &.{
+                "setx", key, val
+            },
+        });
+    } else if (builtin.os.tag == .linux) {
+        // TODO: doesnt work, needs to write to a file and source it
+        const s = try std.fmt.allocPrint(alloc, "{s}={s}", .{
+            key, val,
+        });
+        defer alloc.free(s);
+        _ = try std.process.run(alloc, io, .{
+            .argv = &.{
+                "export",
+                s,
+            },
+        });
+    } else {
+        std.log.warn(
+            \\Cannot set environment variables for the system because I do not know how.
+            \\Feel free to contribute though :D
+        , .{});
+    }
+}
 
+pub fn bootstrap(io: std.Io, alloc: std.mem.Allocator, env: *std.process.Environ.Map) !void {
     std.log.warn("Bootstrap not yet implemented properly.", .{});
     
     //// STEP 1)
@@ -33,6 +60,39 @@ pub fn bootstrap(io: std.Io, env: *std.process.Environ.Map) !void {
         );
 
         // TODO: prompt to walk through their creation
+        std.log.info("Do you want to set your environment variables interactively? [Y/n]", .{});
+        var buf: [1024]u8 = undefined;
+        var stdin = std.Io.File.reader(.stdin(), io, &buf);
+        const opt = (try stdin.interface.takeDelimiter('\n')) orelse "";
+
+        // makes no sense to lowercase and waste instructions; just check not or & return
+        if (!(std.mem.eql(u8, opt, "y") or std.mem.eql(u8, opt, "Y"))) {
+            return;
+        }
+
+        if (env_res.actor_directory.len == 0) {
+            std.log.info("Actors Directory not defined. Define it now:", .{});
+            const actors_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
+            try per_os_setenv(alloc, io, "SCRYPTKYDDY_ACTORS", actors_dir);
+        }
+
+        if (env_res.catalogue_directory.len == 0) {
+            std.log.info("Local Catalogues Directory not defined. Define it now:", .{});
+            const catalogues_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
+            try per_os_setenv(alloc, io, "SCRYPTKYDDY_LOCALCATALOGUES", catalogues_dir);
+        }
+
+        if (env_res.universal_scrypt_install_directory.len == 0) {
+            std.log.info("Scrypts Directory not defined. Define it now:", .{});
+            const scrypts_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
+            try per_os_setenv(alloc, io, "SCRYPTKYDDY_SCRYPTS", scrypts_dir);
+        }
+
+        if (env_res.universal_scrypt_symlink_directory.len == 0) {
+            std.log.info("Symlink Directory not defined. Define it now:", .{});
+            const symlink_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
+            try per_os_setenv(alloc, io, "SCRYPTKYDDY_BIN", symlink_dir);
+        }
 
         return;
     }

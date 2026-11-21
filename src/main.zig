@@ -9,7 +9,7 @@ pub fn main(init: std.process.Init) !void {
     const env = init.environ_map;
 
     if (std.mem.eql(u8, argv[1], "!bootstrap")) {
-        try bootstrap(io, env);
+        try bootstrap(io, allocator, env);
     } else {
         try install(io, allocator, argv, env);
     }
