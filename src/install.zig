@@ -166,6 +166,25 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
         fetch_actor_url,
     }, .{});
     defer actors_map.dir_ctx.alloc.free(contents);
+    
+    if (integrity_role) |i| {
+        std.log.debug("Checking the integrity of the file", .{});
+
+        const integrity_stdout = try actors_map.callActor(i.actor, "integrity", i.args.?,
+        .{
+            .allowsInput = true,
+            .input = contents,
+        });
+        defer actors_map.dir_ctx.alloc.free(integrity_stdout);
+
+        if (!std.mem.eql(u8, integrity_stdout, "CHECK_TRUE")) {
+            std.log.err(
+                \\Checksum failed from the Actor assigned Integrity Role for this Scrypt.
+                \\Will not continue.
+            , .{});
+            return error.ChecksumIntegrityFailure;
+        }
+    }
 
     const install_stdout = try actors_map.callActor(install_actor_name, "install", &.{
         scrypt_install_directory,

@@ -5,6 +5,7 @@ const DirectoryContext = @import("directory_context.zig").DirectoryContext;
 const http_actor = @import("../builtin-actors/http-actor.zig");
 const single_file_write_actor = @import("../builtin-actors/single-file-write-actor.zig");
 const symlink_actor = @import("../builtin-actors/symlink-actor.zig");
+const sha256_actor = @import("../builtin-actors/sha256-actor.zig");
 
 /// maps current actors to arraylists for their available roles
 pub const ActorsMapping = struct {
@@ -152,6 +153,21 @@ pub const ActorsMapping = struct {
             try symlink_actor.link(self.dir_ctx.io, _argv);
             return try self.dir_ctx.alloc.dupe(u8, ""); // must return something allocated so that the memory
                                                                // can be properly 'freed'
+        }
+
+        // only integrity implemented for sha256-actor; so, if a user wants to make their own
+        // sha256-actor with a different role theres no need to impede on their interesting life choices
+        if (std.mem.eql(u8, name, "sha256-actor") and std.mem.eql(u8, role, "integrity")) {
+            const _argv = try std.mem.concat(
+                self.dir_ctx.alloc,
+                []const u8,
+                &.{
+                    &[_][]const u8{ "sha256-actor", role },
+                    additional_args,
+                },
+            );
+            defer self.dir_ctx.alloc.free(_argv);
+            return sha256_actor.integrity(self.dir_ctx.io, self.dir_ctx.alloc, opt.input, _argv);
         }
 
         // actually error instead of waiting for something else to fail, which was the old way of doing things

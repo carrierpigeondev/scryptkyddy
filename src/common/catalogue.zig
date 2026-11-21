@@ -6,6 +6,7 @@ const DirectoryContext = @import("directory_context.zig").DirectoryContext;
 pub const Role = struct {
     role: []const u8,
     actor: []const u8,
+    args: ?[]const []const u8
 };
 
 pub const Scrypt = struct {
