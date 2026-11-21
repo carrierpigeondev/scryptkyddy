@@ -68,7 +68,8 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
     // creates and owns its own DirectoryContext during lifetime of the function (defers deinit to end of the call,
     // not until end of life of catalogue because all thats needed from catalogue is the information, not necessarily
     // the actual toml files after being parsed or their parent directory (of which is the DirectoryContext)
-    try catalogue.parseDirectory(env_res.catalogue_directory);
+    var d = try catalogue.parseDirectory(env_res.catalogue_directory);
+    defer d.deinit();
 
     std.log.info("Assembled catalogue of {} scrypts from {} parts.", .{
         catalogue.scrypts.items.len,

@@ -51,10 +51,10 @@ pub const Catalogue = struct {
         self.scrypts.deinit(self.alloc);
     }
 
-    pub fn parseDirectory(self: *Catalogue, source: []const u8) !void {
+    pub fn parseDirectory(self: *Catalogue, source: []const u8) !DirectoryContext {
         var dir_ctx_cat = DirectoryContext.init(source, self.io, self.alloc);
         try dir_ctx_cat.discover();
-        defer dir_ctx_cat.deinit();
+        errdefer dir_ctx_cat.deinit();
 
         for (dir_ctx_cat.children_names.items) |entry| {
             // dir_ctx_cat already contains entry because getting it from the arraylist, so do not need to waste calls on
@@ -62,6 +62,8 @@ pub const Catalogue = struct {
             const path = dir_ctx_cat.getFullPath(entry);
             self.parse(path);
         }
+
+        return dir_ctx_cat;
     }
 
     /// will not return an error, but provide a warning and add nothing

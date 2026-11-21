@@ -2,6 +2,7 @@ const std = @import("std");
 const install = @import("install.zig").install;
 const bootstrap = @import("bootstrap.zig").bootstrap;
 const downsize_cast = @import("downsize-cast.zig").downsize_cast;
+const recatalogue = @import("recatalogue.zig").recatalogue;
 
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
@@ -13,8 +14,9 @@ pub fn main(init: std.process.Init) !void {
         try bootstrap(io, allocator, env);
     } else if (std.mem.startsWith(u8, argv[1], "!downsize")) {
         try downsize_cast(io, allocator, env);
-    }
-    else {
+    } else if (std.mem.startsWith(u8, argv[1], "!recatalogue")) {
+        try recatalogue(io, allocator, env, argv[0]);
+    } else {
         try install(io, allocator, argv, env);
     }
 }
