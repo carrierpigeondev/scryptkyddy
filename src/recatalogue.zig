@@ -25,4 +25,6 @@ pub fn recatalogue(io: std.Io, alloc: std.mem.Allocator, env: *std.process.Envir
     const n = catalogues.len;
 
     // remove all the stuff because it needs to be redone
+    _ = n;
+    _ = exec_name;
 }
