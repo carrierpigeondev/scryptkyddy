@@ -46,4 +46,4 @@ $2  : Output Scrypt Path
 $3  : Output Symlink path
 ```
 
-Writes nothing to standard out. Must create working link to the file, and make the scrypt main file executable.
+Writes nothing to standard out. Must create working link to the file. The file must be executable.

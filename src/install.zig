@@ -207,6 +207,5 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
         std.log.info("Successfully made link for scrypt {s} to directory {s}.", .{
             install_stdout, env_res.universal_scrypt_symlink_directory
         });
-        std.log.info("Note: you may have to make the link executable if on a Linux system.", .{});
     }
 }
