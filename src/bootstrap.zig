@@ -3,25 +3,19 @@ const builtin = @import("builtin");
 
 const EnvironmentLoader = @import("common/environment_loader.zig");
 
-fn per_os_setenv(alloc: std.mem.Allocator, io: std.Io, key: []const u8, val: []const u8) !void {
+fn per_os_setenv(alloc: std.mem.Allocator, io: std.Io, file: std.Io.File, key: []const u8, val: []const u8) !void {
     if (builtin.os.tag == .windows) {
         _ = try std.process.run(alloc, io, .{
             .argv = &.{
                 "setx", key, val
             },
         });
-    } else if (builtin.os.tag == .linux) {
-        // TODO: doesnt work, needs to write to a file and source it
-        const s = try std.fmt.allocPrint(alloc, "{s}={s}", .{
+    } else if (builtin.os.tag == .linux or builtin.os.tag == .freebsd) { // could work with other *bsd; untested
+        const append_string = try std.fmt.allocPrint(alloc, "export {s}=\"{s}\"\n", .{
             key, val,
         });
-        defer alloc.free(s);
-        _ = try std.process.run(alloc, io, .{
-            .argv = &.{
-                "export",
-                s,
-            },
-        });
+        defer alloc.free(append_string);
+        try file.writePositionalAll(io, append_string, try file.length(io));
     } else {
         std.log.warn(
             \\Cannot set environment variables for the system because I do not know how.
@@ -59,7 +53,6 @@ pub fn bootstrap(io: std.Io, alloc: std.mem.Allocator, env: *std.process.Environ
             .{}
         );
 
-        // TODO: prompt to walk through their creation
         std.log.info("Do you want to set your environment variables interactively? [Y/n]", .{});
         var buf: [1024]u8 = undefined;
         var stdin = std.Io.File.reader(.stdin(), io, &buf);
@@ -70,28 +63,46 @@ pub fn bootstrap(io: std.Io, alloc: std.mem.Allocator, env: *std.process.Environ
             return;
         }
 
+        var file: std.Io.File = undefined; // allows for Windows to work in that it is never accessed
+
+        // again, this might work on other operating systems, but not confirmed to work so will not offer full support
+        if (builtin.os.tag == .linux or builtin.os.tag == .freebsd) {
+            std.log.info("What file do you want to append 'export's to?", .{});
+            stdin = std.Io.File.reader(.stdin(), io, &buf);
+            const profile_path = (try stdin.interface.takeDelimiter('\n')) orelse "";
+
+            file = try std.Io.Dir.cwd().openFile(io, profile_path, .{ .mode = .write_only });
+        } else {
+            std.log.info(
+                \\Platform not Linux or FreedBSD;
+                \\If you are not on Windows, these steps may not work for you.
+                ,
+                .{}
+            );
+        }
+
         if (env_res.actor_directory.len == 0) {
             std.log.info("Actors Directory not defined. Define it now:", .{});
             const actors_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
-            try per_os_setenv(alloc, io, "SCRYPTKYDDY_ACTORS", actors_dir);
+            try per_os_setenv(alloc, io, file, "SCRYPTKYDDY_ACTORS", actors_dir);
         }
 
         if (env_res.catalogue_directory.len == 0) {
             std.log.info("Local Catalogues Directory not defined. Define it now:", .{});
             const catalogues_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
-            try per_os_setenv(alloc, io, "SCRYPTKYDDY_LOCALCATALOGUES", catalogues_dir);
+            try per_os_setenv(alloc, io, file, "SCRYPTKYDDY_LOCALCATALOGUES", catalogues_dir);
         }
 
         if (env_res.universal_scrypt_install_directory.len == 0) {
             std.log.info("Scrypts Directory not defined. Define it now:", .{});
             const scrypts_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
-            try per_os_setenv(alloc, io, "SCRYPTKYDDY_SCRYPTS", scrypts_dir);
+            try per_os_setenv(alloc, io, file, "SCRYPTKYDDY_SCRYPTS", scrypts_dir);
         }
 
         if (env_res.universal_scrypt_symlink_directory.len == 0) {
             std.log.info("Symlink Directory not defined. Define it now:", .{});
             const symlink_dir = (try stdin.interface.takeDelimiter('\n')) orelse "";
-            try per_os_setenv(alloc, io, "SCRYPTKYDDY_BIN", symlink_dir);
+            try per_os_setenv(alloc, io, file, "SCRYPTKYDDY_BIN", symlink_dir);
         }
 
         return;
