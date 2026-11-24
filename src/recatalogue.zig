@@ -21,44 +21,8 @@ pub fn recatalogue(io: std.Io, alloc: std.mem.Allocator, env: *std.process.Envir
     var d = try catalogue.parseDirectory(env_res.catalogue_directory);
     defer d.deinit();
 
-    var recatalougeable_catalogues: std.ArrayList(Scrypt) = .empty;
-    defer recatalougeable_catalogues.deinit(alloc);
+    const catalogues = d.children_names.items;
+    const n = catalogues.len;
 
-    for (catalogue.scrypts.items) |scrypt| {
-        if (d.containsFile(scrypt.id)) {
-            try recatalougeable_catalogues.append(alloc, scrypt);
-            continue;
-        }
-
-        // also check the scrypt + toml since it is not enforced to have .toml; but sometimes might?
-        const scrypt_plus_toml = try std.fmt.allocPrint(alloc, "{s}.toml", .{scrypt.id});
-        defer alloc.free(scrypt_plus_toml);
-        if (d.containsFile(scrypt_plus_toml)) {
-            try recatalougeable_catalogues.append(alloc, scrypt);
-            continue;
-        }
-    }
-
-    var commands_to_run: std.ArrayList([]const []const u8) = .empty;
-    defer {
-        for (commands_to_run.items) |cmd| {
-            alloc.free(cmd);
-        }
-        commands_to_run.deinit(alloc);
-    }
-
-    std.log.info("Ok to run the following commands?", .{});
-    for (recatalougeable_catalogues.items) |rc| {
-        const cmd = try alloc.dupe([]const u8, &.{
-            exec_name, rc.id,
-        });
-        try commands_to_run.append(alloc, cmd);
-    }
-
-    for (commands_to_run.items) |cmd| {
-        for (cmd) |arg| {
-            std.debug.print("{s} ", .{arg});
-        }
-        std.debug.print("\n", .{});
-    }
+    // remove all the stuff because it needs to be redone
 }
