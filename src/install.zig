@@ -150,15 +150,11 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
     };
 
     // and for the bin directory (symlinks): e.g., ?/scryptkyddy/bin
-    const scrypt_symlink_path = if (is_actor or is_catalogue) ""
-    else
-        try std.fs.path.join(allocator, &.{
-            env_res.universal_scrypt_symlink_directory,
-            scrypt_name,
-        });
-    defer if (!is_actor and !is_catalogue) {
-        allocator.free(scrypt_symlink_path);
-    };
+    const scrypt_symlink_path = try std.fs.path.join(allocator, &.{
+        env_res.universal_scrypt_symlink_directory,
+        scrypt_name,
+    });
+    allocator.free(scrypt_symlink_path);
 
     //// SECTION
     // dedicated to running actors
