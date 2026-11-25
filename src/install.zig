@@ -154,7 +154,7 @@ pub fn install(io: std.Io, allocator: std.mem.Allocator, argv: []const [:0]const
         env_res.universal_scrypt_symlink_directory,
         scrypt_name,
     });
-    allocator.free(scrypt_symlink_path);
+    defer allocator.free(scrypt_symlink_path);
 
     //// SECTION
     // dedicated to running actors
